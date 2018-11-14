@@ -1,25 +1,31 @@
 import React, { Component, Fragment } from "react";
-
 import Dimensions from "react-dimensions";
-import { Container, ButtonContainer, PointReference } from "./styles";
-
+import { withRouter } from "react-router-dom";
 import { ModalRoute } from "react-router-modal";
-import AddProperty from "../AddProperty";
 import MapGL from "react-map-gl";
 import PropTypes from "prop-types";
 import debounce from "lodash/debounce";
-import { withRouter } from "react-router-dom";
 
-import { logout } from "../../services/auth";
 import api from "../../services/api";
-import Properties from "./components/Properties";
+import { logout } from "../../services/auth";
 
+import Properties from "./components/Properties";
 import Button from "./components/Button";
+
+import AddProperty from "../AddProperty";
+import Property from "../Property";
+
+import { Container, ButtonContainer, PointReference } from "./styles";
 
 const TOKEN =
   "pk.eyJ1IjoiYWxsYW5jYXJsb3MiLCJhIjoiY2pvZXc4bGI0MWJxaDNybzFvZ3YzM3BqNiJ9.6Zk45APvWTkDgkUOdgwX5g";
 
 class Map extends Component {
+  static propTypes = {
+    containerWidth: PropTypes.number.isRequired,
+    containerHeight: PropTypes.number.isRequired
+  };
+
   constructor() {
     super();
     this.updatePropertiesLocalization = debounce(
@@ -28,18 +34,13 @@ class Map extends Component {
     );
   }
 
-  static propTypes = {
-    containerWidth: PropTypes.number.isRequired,
-    containerHeight: PropTypes.number.isRequired
-  };
-
   state = {
     viewport: {
       latitude: -27.2108001,
       longitude: -49.6446024,
       zoom: 12.8,
       bearing: 0,
-      pitch: 0,
+      pitch: 0
     },
     properties: [],
     addActivate: false
@@ -52,7 +53,6 @@ class Map extends Component {
   updatePropertiesLocalization() {
     this.loadProperties();
   }
-
 
   loadProperties = async () => {
     const { latitude, longitude } = this.state.viewport;
@@ -119,7 +119,11 @@ class Map extends Component {
   }
 
   render() {
-    const { containerWidth: width, containerHeight: height, match } = this.props;
+    const {
+      containerWidth: width,
+      containerHeight: height,
+      match
+    } = this.props;
     const { properties, addActivate } = this.state;
     return (
       <Fragment>
@@ -132,14 +136,19 @@ class Map extends Component {
           onViewportChange={viewport => this.setState({ viewport })}
           onViewStateChange={this.updatePropertiesLocalization.bind(this)}
         >
-          <Properties properties={properties} />
+          {!addActivate && <Properties match={match} properties={properties} />}
         </MapGL>
-        {this.renderActions()}
         {this.renderButtonAdd()}
+        {this.renderActions()}
         <ModalRoute
           path={`${match.url}/properties/add`}
           parentPath={match.url}
           component={AddProperty}
+        />
+        <ModalRoute
+          path={`${match.url}/property/:id`}
+          parentPath={match.url}
+          component={Property}
         />
       </Fragment>
     );
@@ -147,7 +156,6 @@ class Map extends Component {
 }
 
 const DimensionedMap = withRouter(Dimensions()(Map));
-
 const App = () => (
   <Container>
     <DimensionedMap />
